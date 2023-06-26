@@ -14,7 +14,12 @@ app.post("/scrape", (req, res) => {
   const { body } = req;
   const { url } = body;
 
-  return parseUrl(url).then(result => res.json(result));
+  return parseUrl(url)
+    .then((result) => res.json(result))
+    .catch((error) => {
+      console.error(error);
+      res.status(500).json({ error: "Internal Server Error" });
+    });
 });
 
 app.listen(5000, () => console.log("OG Scraper Listening..."));
@@ -26,18 +31,18 @@ const xpaths = {
   keywords: 'string(//meta[@property="keywords"]/@content)',
 };
 
-const retrievePage = url => axios.request({ url });
-const convertBodyToDocument = body => new DOMParser().parseFromString(body);
+const retrievePage = (url) => axios.request({ url });
+const convertBodyToDocument = (body) => new DOMParser().parseFromString(body);
 const nodesFromDocument = (document, xpathselector) =>
   xpath.select(xpathselector, document);
 const mapProperties = (paths, document) =>
   Object.keys(paths).reduce(
     (acc, key) => ({ ...acc, [key]: nodesFromDocument(document, paths[key]) }),
-    {},
+    {}
   );
 
-const parseUrl = url =>
-  retrievePage(url).then(response => {
+const parseUrl = (url) =>
+  retrievePage(url).then((response) => {
     const document = convertBodyToDocument(response.data);
     const mappedProperties = mapProperties(xpaths, document);
     return mappedProperties;
